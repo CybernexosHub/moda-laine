@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moda Laine - Catálogo</title>
+    <title>Moda Laine - Loja Online</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -11,332 +11,194 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f9f9f9;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             color: #333;
         }
-        header {
-            background-color: #fff;
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid #eaeaea;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 24px;
-            color: #2c3e50;
-        }
-        header p {
-            margin: 5px 0 0;
-            font-size: 13px;
-            color: #7f8c8d;
-        }
         .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 0 15px;
+            max-width: 1000px;
+            margin: 0 auto;
         }
-        .filtros {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-        }
-        .btn-filtro {
-            background: #fff;
-            border: 1px solid #ddd;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        .btn-filtro.ativo {
-            background: #2c3e50;
-            color: #fff;
-            border-color: #2c3e50;
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
         }
         .grid-produtos {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
         }
-        .card-produto {
+        .produto-card {
             background: #fff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        .tag-status {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: bold;
-            color: #fff;
-            z-index: 2;
-        }
-        .tag-pronta { background-color: #27ae60; }
-        .tag-encomenda { background-color: #e67e22; }
-
-        .card-produto img {
-            width: 100%;
-            height: 300px;
-            object-fit: cover;
-        }
-        .card-body {
             padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
-            flex-grow: 1;
+            justify-content: space-between;
         }
-        .card-body h3 {
-            margin: 0 0 5px;
-            font-size: 16px;
-            color: #2c3e50;
-        }
-        .preco {
-            font-size: 16px;
-            font-weight: bold;
-            color: #27ae60;
-            margin-bottom: 10px;
-        }
-        .tamanhos {
-            font-size: 13px;
-            color: #666;
+        .imagem-container {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            background-color: #eee;
+            border-radius: 8px;
+            overflow: hidden;
             margin-bottom: 15px;
         }
-        .btn-comprar {
-            margin-top: auto;
-            background: #2c3e50;
-            color: #fff;
+        .imagem-container img.principal {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .fotos-miniaturas {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+            overflow-x: auto;
+        }
+        .miniatura {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .miniatura:hover {
+            border-color: #2c3e50;
+        }
+        .produto-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: #333;
+        }
+        .preco {
+            font-size: 20px;
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #25d366;
+            color: white;
             border: none;
             padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-        .btn-comprar:hover {
-            background: #34495e;
-        }
-        /* Botão Flutuante da Sacola */
-        .btn-sacola-flutuante {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #27ae60;
-            color: #fff;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 30px;
+            border-radius: 6px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 100;
+            transition: background 0.2s;
         }
-        /* Modal da Sacola */
-        #modalSacola {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+        button:hover {
+            background-color: #1ebe5d;
         }
-        .modal-content {
-            background: #fff;
-            width: 90%;
-            max-width: 400px;
-            padding: 20px;
-            border-radius: 12px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .item-sacola {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 8px;
-            font-size: 14px;
+        .sem-produtos {
+            text-align: center;
+            grid-column: 1 / -1;
+            color: #777;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>👗 Moda Laine</h1>
-        <p>Curadoria Exclusiva • Encomendas e Pronta Entrega em Ampére</p>
-    </header>
-
-    <div class="container">
-        <div class="filtros">
-            <button class="btn-filtro ativo" onclick="filtrarProdutos('todos', this)">Todas as Peças</button>
-            <button class="btn-filtro" onclick="filtrarProdutos('Pronta Entrega', this)">⚡ Pronta Entrega</button>
-            <button class="btn-filtro" onclick="filtrarProdutos('Sob Encomenda', this)">📦 Sob Encomenda</button>
-        </div>
-
-        <div id="listaProdutos" class="grid-produtos">
-            <p style="text-align:center; width:100%; color:#7f8c8d;">A carregar catálogo...</p>
-        </div>
+<div class="container">
+    <h1>Moda Laine</h1>
+    <div id="lista-produtos" class="grid-produtos">
+        <!-- Os produtos serão carregados aqui automaticamente -->
     </div>
+</div>
 
-    <!-- Botão Sacola -->
-    <button class="btn-sacola-flutuante" onclick="abrirSacola()">🛍️ Sacola (<span id="contadorSacola">0</span>)</button>
+<script>
+    // Substitua pelas suas credenciais do Supabase se necessário
+    const SUPABASE_URL = 'https://emsziewivstdmlwortmu.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_Vpo0ewgWELFBLTUrXaobIw_SWz6cgSF';
+    
+    // Se estiver a usar o cliente global ou local configurado:
+    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-    <!-- Modal da Sacola -->
-    <div id="modalSacola">
-        <div class="modal-content">
-            <h3>Sua Sacola de Compras</h3>
-            <div id="itensSacolaModal" style="margin: 15px 0;">
-                <!-- Itens entram aqui -->
-            </div>
-            
-            <!-- Forma de Pagamento -->
-            <div style="margin: 15px 0; text-align: left;">
-                <label for="formaPagamento" style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">
-                    💳 Forma de Pagamento:
-                </label>
-                <select id="formaPagamento" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px;">
-                    <option value="Pix">💚 Pix</option>
-                    <option value="Cartão de Crédito/Débito">💳 Cartão de Crédito / Débito</option>
-                    <option value="Dinheiro">💵 Dinheiro na Entrega</option>
-                </select>
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="fecharSacola()" style="flex:1; padding:10px; background:#ccc; border:none; border-radius:8px; cursor:pointer;">Fechar</button>
-                <button onclick="finalizarPedido()" style="flex:2; padding:10px; background:#27ae60; color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Finalizar no WhatsApp</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Configuração do Supabase
-        const SUPABASE_URL = "https://emsziewivstdmlwortmu.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_Vpo0ewgWELFBLTUrXaobIw_SWz6cgSF";
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        let produtosGlobais = [];
-        let sacola = [];
-
-        async function carregarProdutos() {
-            const container = document.getElementById('listaProdutos');
-            try {
-                const { data, error } = await _supabase.from('produtos').select('*').order('id', { ascending: false });
-                
+    async function buscarProdutos() {
+        const lista = document.getElementById('lista-produtos');
+        
+        try {
+            // Se estiver a usar o Supabase diretamente:
+            if (supabaseClient) {
+                const { data, error } = await supabaseClient.from('produtos').select('*');
                 if (error) throw error;
-
-                produtosGlobais = data || [];
-                renderizarProdutos(produtosGlobais);
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = `<p style="color:red; text-align:center; width:100%;">Erro ao carregar o catálogo.</p>`;
-            }
-        }
-
-        function renderizarProdutos(lista) {
-            const container = document.getElementById('listaProdutos');
-            if (lista.length === 0) {
-                container.innerHTML = `<p style="text-align:center; width:100%; color:#7f8c8d;">Nenhuma peça encontrada.</p>`;
-                return;
-            }
-
-            container.innerHTML = lista.map(p => {
-                const statusTexto = p.status || 'Pronta Entrega';
-                const classeTag = statusTexto === 'Pronta Entrega' ? 'tag-pronta' : 'tag-encomenda';
-                
-                return `
-                    <div class="card-produto">
-                        <span class="tag-status ${classeTag}">${statusTexto}</span>
-                        <img src="${p.imagem || 'https://via.placeholder.com/300'}" alt="${p.nome}">
-                        <div class="card-body">
-                            <h3>${p.nome}</h3>
-                            <div class="preco">R$ ${Number(p.preco).toFixed(2)}</div>
-                            <div class="tamanhos">Tamanhos disponíveis: ${p.tamanho || 'U'}</div>
-                            <button class="btn-comprar" onclick="adicionarSacola('${p.nome}', '${p.preco}')">+ Adicionar à Sacola</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function filtrarProdutos(filtro, elemento) {
-            document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('ativo'));
-            elemento.classList.add('ativo');
-
-            if (filtro === 'todos') {
-                renderizarProdutos(produtosGlobais);
+                renderizarProdutos(data);
             } else {
-                const filtrados = produtosGlobais.filter(p => (p.status || 'Pronta Entrega') === filtro);
-                renderizarProdutos(filtrados);
+                // Modo de segurança local caso prefira testar
+                lista.innerHTML = '<p class="sem-produtos">Carregando produtos...</p>';
             }
+        } catch (err) {
+            console.error('Erro ao buscar produtos:', err);
+            lista.innerHTML = '<p class="sem-produtos">Erro ao carregar os produtos.</p>';
+        }
+    }
+
+    function renderizarProdutos(produtos) {
+        const lista = document.getElementById('lista-produtos');
+        lista.innerHTML = '';
+
+        if (!produtos || produtos.length === 0) {
+            lista.innerHTML = '<p class="sem-produtos">Nenhum produto cadastrado no momento.</p>';
+            return;
         }
 
-        function adicionarSacola(nome, preco) {
-            sacola.push({ nome, preco });
-            document.getElementById('contadorSacola').innerText = sacola.length;
-            alert(`${nome} adicionado à sacola!`);
-        }
+        produtos.forEach(produto => {
+            const fotoPrincipal = produto.imagem_url || 'https://via.placeholder.com/300';
+            
+            let fotosExtrasHTML = '';
+            // Verifica se existem fotos extras cadastradas
+            let listaFotos = produto.fotos_extras;
+            if (typeof listaFotos === 'string') {
+                try { listaFotos = JSON.parse(listaFotos); } catch(e) { listaFotos = []; }
+            }
 
-        function abrirSacola() {
-            const containerModal = document.getElementById('itensSacolaModal');
-            if (sacola.length === 0) {
-                containerModal.innerHTML = `<p style="text-align:center; color:#666;">A sua sacola está vazia.</p>`;
-            } else {
-                containerModal.innerHTML = sacola.map((item, index) => `
-                    <div class="item-sacola">
-                        <span>${item.nome} - R$ ${Number(item.preco).toFixed(2)}</span>
-                        <button onclick="removerItem(${index})" style="background:#e74c3c; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">X</button>
+            if (listaFotos && listaFotos.length > 0) {
+                fotosExtrasHTML = '<div class="fotos-miniaturas">';
+                listaFotos.forEach(foto => {
+                    fotosExtrasHTML += `<img src="${foto}" class="miniatura" onclick="trocarFotoPrincipal(this, '${produto.id}')">`;
+                });
+                fotosExtrasHTML += '</div>';
+            }
+
+            const card = document.createElement('div');
+            card.className = 'produto-card';
+            card.innerHTML = `
+                <div>
+                    <div class="imagem-container">
+                        <img id="foto-principal-${produto.id}" class="principal" src="${fotoPrincipal}" alt="${produto.nome}">
                     </div>
-                `).join('');
-            }
-            document.getElementById('modalSacola').style.display = 'flex';
+                    <h3>${produto.nome}</h3>
+                    <p class="preco">R$ ${parseFloat(produto.preco || 0).toFixed(2)}</p>
+                    ${fotosExtrasHTML}
+                </div>
+                <button onclick="comprarWhatsApp('${produto.nome}')">Pedir no WhatsApp</button>
+            `;
+
+            lista.appendChild(card);
+        });
+    }
+
+    function trocarFotoPrincipal(elemento, produtoId) {
+        const fotoPrincipal = document.getElementById(`foto-principal-${produtoId}`);
+        if (fotoPrincipal) {
+            fotoPrincipal.src = elemento.src;
         }
+    }
 
-        function fecharSacola() {
-            document.getElementById('modalSacola').style.display = 'none';
-        }
+    function comprarWhatsApp(nomeProduto) {
+        const telefone = "554999663759"; // Substitua pelo seu número do WhatsApp com DDD
+        const mensagem = encodeURIComponent(`Olá! Gostaria de comprar o produto: ${nomeProduto}`);
+        window.open(`https://wa.me/${telefone}?text=${mensagem}`, '_blank');
+    }
 
-        function removerItem(index) {
-            sacola.splice(index, 1);
-            document.getElementById('contadorSacola').innerText = sacola.length;
-            abrirSacola();
-        }
+    // Carregar produtos ao iniciar a página
+    window.onload = buscarProdutos;
+</script>
 
-        function finalizarPedido() {
-            if (sacola.length === 0) {
-                alert('A sua sacola está vazia!');
-                return;
-            }
-
-            const formaPagamento = document.getElementById('formaPagamento').value;
-            let total = sacola.reduce((acc, item) => acc + Number(item.preco), 0);
-
-            let mensagem = `*Novo Pedido - Moda Laine*\n\n`;
-            sacola.forEach((item, index) => {
-                mensagem += `${index + 1}. ${item.nome} - R$ ${Number(item.preco).toFixed(2)}\n`;
-            });
-            mensagem += `\n*Total:* R$ ${total.toFixed(2)}`;
-            mensagem += `\n*Forma de Pagamento:* ${formaPagamento}`;
-            mensagem += `\n*Local de Entrega:* Ampére - PR`;
-
-            // Substitui pelo teu número de WhatsApp real se necessário
-            const numeroWhatsApp = "554999663759"; 
-            window.open(`https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`, '_blank');
-        }
-
-        // Carregar produtos ao iniciar a página
-        carregarProdutos();
-    </script>
 </body>
 </html>
