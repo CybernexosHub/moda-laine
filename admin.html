@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Moda Laine</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #27ae60;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #219653;
+        }
+        .btn-cancelar {
+            background: #e74c3c;
+            margin-left: 10px;
+            display: none;
+        }
+        .btn-cancelar:hover {
+            background: #c0392b;
+        }
+        hr {
+            margin: 30px 0;
+            border: 0;
+            border-top: 1px solid #eee;
+        }
+        .produto-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+        }
+        .produto-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .produto-info img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        .acoes-btn {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-editar {
+            background: #2980b9;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .btn-editar:hover {
+            background: #1f618d;
+        }
+        .btn-apagar {
+            background: #e74c3c;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .btn-apagar:hover {
+            background: #c0392b;
+        }
+        #loadingOverlay {
+            display: none;
+            font-weight: bold;
+            color: #e67e22;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>👗 Painel Administrativo - Moda Laine</h2>
+        <p style="color: #666; font-size: 14px;">Cadastre peças selecionando fotos diretamente do telemóvel ou computador.</p>
+        
+        <form id="formProduto" onsubmit="salvarProduto(event)">
+            <input type="hidden" id="produtoId">
+            <input type="hidden" id="imagemAtual">
+            <input type="hidden" id="fotosExtrasAtuais">
+
+            <div class="form-group">
+                <label for="nome">Nome da Peça:</label>
+                <input type="text" id="nome" required placeholder="Ex: Vestido Flora Verão">
+            </div>
+
+            <div class="form-group">
+                <label for="preco">Preço (R$):</label>
+                <input type="number" step="0.01" id="preco" required placeholder="Ex: 120.00">
+            </div>
+
+            <div class="form-group">
+                <label for="tamanhos">Tamanhos Disponíveis:</label>
+                <input type="text" id="tamanhos" required placeholder="Ex: M, G ou Único">
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status:</label>
+                <select id="status">
+                    <option value="Pronta Entrega">⚡ Pronta Entrega</option>
+                    <option value="Sob Encomenda">📦 Sob Encomenda</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="fileImagemPrincipal">Foto Principal (Selecionar do Dispositivo):</label>
+                <input type="file" id="fileImagemPrincipal" accept="image/*">
+                <small style="color: #666;">Deixe em branco se estiver a editar e não quiser alterar a foto principal.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="fileFotosExtras">Fotos Extras (Pode selecionar várias de uma vez):</label>
+                <input type="file" id="fileFotosExtras" accept="image/*" multiple>
+            </div>
+
+            <div id="loadingOverlay">A enviar imagens para a nuvem, aguarde um momento... ⏳</div>
+
+            <div style="display: flex; align-items: center; margin-top: 15px;">
+                <button type="submit" id="btnSalvar">Cadastrar Peça</button>
+                <button type="button" id="btnCancelar" class="btn-cancelar" onclick="limparFormulario()">Cancelar Edição</button>
+            </div>
+        </form>
+
+        <hr>
+
+        <h3>Peças Cadastradas no Catálogo</h3>
+        <div id="listaAdmin">
+            <p style="color: #7f8c8d;">A carregar peças...</p>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://emsziewivstdmlwortmu.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_Vpo0ewgWELFBLTUrXaobIw_SWz6cgSF";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function carregarProdutosAdmin() {
+            const container = document.getElementById('listaAdmin');
+            try {
+                const { data, error } = await _supabase.from('produtos').select('*').order('id', { ascending: false });
+                
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<p style="color: #7f8c8d;">Nenhuma peça cadastrada ainda.</p>`;
+                    return;
+                }
+
+                container.innerHTML = data.map(p => `
+                    <div class="produto-item">
+                        <div class="produto-info">
+                            <img src="${p.imagem || 'https://via.placeholder.com/50'}" alt="${p.nome}">
+                            <div>
+                                <strong>${p.nome}</strong><br>
+                                <span style="color: #27ae60; font-weight: bold;">R$ ${Number(p.preco).toFixed(2)}</span> | 
+                                <span style="color: #666; font-size: 13px;">Tamanho: ${p.tamanhos} (${p.status || 'Pronta Entrega'})</span>
+                            </div>
+                        </div>
+                        <div class="acoes-btn">
+                            <button class="btn-editar" onclick="prepararEdicao(${p.id}, '${p.nome.replace(/'/g, "\\'")}', ${p.preco}, '${p.tamanhos}', '${p.status || 'Pronta Entrega'}', '${p.imagem || ''}', '${(p.fotos_extras || '').replace(/'/g, "\\'")}')">Editar</button>
+                            <button class="btn-apagar" onclick="apagarProduto(${p.id})">Apagar</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<p style="color: red;">Erro ao carregar as peças.</p>`;
+            }
+        }
+
+        async function fazerUploadArquivo(file) {
+            const nomeArquivo = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+            const { data, error } = await _supabase.storage
+                .from('produtos')
+                .upload(nomeArquivo, file);
+
+            if (error) {
+                throw new Error('Erro no upload da imagem: ' + error.message);
+            }
+
+            const { data: urlData } = _supabase.storage
+                .from('produtos')
+                .getPublicUrl(nomeArquivo);
+
+            return urlData.publicUrl;
+        }
+
+        async function salvarProduto(event) {
+            event.preventDefault();
+
+            document.getElementById('loadingOverlay').style.display = 'block';
+            document.getElementById('btnSalvar').disabled = true;
+
+            try {
+                const id = document.getElementById('produtoId').value;
+                const nome = document.getElementById('nome').value;
+                const preco = parseFloat(document.getElementById('preco').value);
+                const tamanhos = document.getElementById('tamanhos').value;
+                const status = document.getElementById('status').value;
+                
+                let imagem = document.getElementById('imagemAtual').value;
+                let fotos_extras = document.getElementById('fotosExtrasAtuais').value;
+
+                const filePrincipal = document.getElementById('fileImagemPrincipal').files[0];
+                if (filePrincipal) {
+                    imagem = await fazerUploadArquivo(filePrincipal);
+                }
+
+                const filesExtras = document.getElementById('fileFotosExtras').files;
+                if (filesExtras.length > 0) {
+                    let novosLinksExtras = [];
+                    for (let i = 0; i < filesExtras.length; i++) {
+                        const linkExtra = await fazerUploadArquivo(filesExtras[i]);
+                        novosLinksExtras.push(linkExtra);
+                    }
+                    if (fotos_extras) {
+                        fotos_extras += ',' + novosLinksExtras.join(',');
+                    } else {
+                        fotos_extras = novosLinksExtras.join(',');
+                    }
+                }
+
+                if (id) {
+                    const { error } = await _supabase
+                        .from('produtos')
+                        .update({ nome, preco, tamanhos, status, imagem, fotos_extras })
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    alert('Peça atualizada com sucesso!');
+                } else {
+                    if (!imagem) {
+                        alert('Por favor, selecione uma foto principal.');
+                        document.getElementById('loadingOverlay').style.display = 'none';
+                        document.getElementById('btnSalvar').disabled = false;
+                        return;
+                    }
+
+                    const { error } = await _supabase
+                        .from('produtos')
+                        .insert([{ nome, preco, tamanhos, status, imagem, fotos_extras }]);
+
+                    if (error) throw error;
+                    alert('Peça cadastrada com sucesso!');
+                }
+
+                limparFormulario();
+                carregarProdutosAdmin();
+
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('btnSalvar').disabled = false;
+            }
+        }
+
+        function prepararEdicao(id, nome, preco, tamanhos, status, imagem, fotos_extras) {
+            document.getElementById('produtoId').value = id;
+            document.getElementById('nome').value = nome;
+            document.getElementById('preco').value = preco;
+            document.getElementById('tamanhos').value = tamanhos;
+            document.getElementById('status').value = status;
+            document.getElementById('imagemAtual').value = imagem;
+            document.getElementById('fotosExtrasAtuais').value = fotos_extras || '';
+
+            document.getElementById('fileImagemPrincipal').value = '';
+            document.getElementById('fileFotosExtras').value = '';
+
+            document.getElementById('btnSalvar').innerText = "Atualizar Peça";
+            document.getElementById('btnCancelar').style.display = "inline-block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function limparFormulario() {
+            document.getElementById('formProduto').reset();
+            document.getElementById('produtoId').value = '';
+            document.getElementById('imagemAtual').value = '';
+            document.getElementById('fotosExtrasAtuais').value = '';
+            document.getElementById('btnSalvar').innerText = "Cadastrar Peça";
+            document.getElementById('btnCancelar').style.display = "none";
+        }
+
+        async function apagarProduto(id) {
+            if (confirm('Tens a certeza que pretendes apagar esta peça?')) {
+                const { error } = await _supabase.from('produtos').delete().eq('id', id);
+                if (error) {
+                    alert('Erro ao apagar: ' + error.message);
+                } else {
+                    carregarProdutosAdmin();
+                }
+            }
+        }
+
+        carregarProdutosAdmin();
+    </script>
+</body>
+</html>
